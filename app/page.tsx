@@ -34,18 +34,64 @@ function renderText(text: string) {
   )
 }
 
+function NicknameGate({ onEnter }: { onEnter: (nickname: string) => void }) {
+  const [value, setValue] = useState('')
+  return (
+    <div className="min-h-screen bg-[#f5f0eb] flex items-center justify-center p-6">
+      <div className="bg-white rounded-2xl p-8 w-full max-w-sm shadow-sm text-center">
+        <div className="text-4xl mb-4">🏮</div>
+        <h1 className="text-lg font-bold mb-1">황오동 가상 동네</h1>
+        <p className="text-sm text-gray-400 mb-6">닉네임을 알려주세요.<br/>에이전트들이 당신을 기억할게요.</p>
+        <input
+          className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-gray-400 mb-3 text-center"
+          placeholder="닉네임 입력 (예: 경주여행자)"
+          value={value}
+          onChange={e => setValue(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && value.trim() && onEnter(value.trim())}
+          maxLength={12}
+        />
+        <button
+          onClick={() => value.trim() && onEnter(value.trim())}
+          disabled={!value.trim()}
+          className="w-full bg-[#1a1a1a] text-white rounded-xl py-3 text-sm font-medium disabled:opacity-40"
+        >
+          동네 입장하기 →
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export default function Home() {
+  const [nickname, setNickname] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') return localStorage.getItem('nickname')
+    return null
+  })
   const [activeAgent, setActiveAgent] = useState<Agent>(AGENTS.hhh)
   const [chatHistory, setChatHistory] = useState<Record<AgentId, Message[]>>({
-    hhh: [{ role: 'agent', text: '...뭐, 왔어요? 앉아요.', time: now() }],
-    weekend: [{ role: 'agent', text: '어서오세요 😊 주말에 오셨군요!', time: now() }],
-    home: [{ role: 'agent', text: '양지마을에 오셨군요. 조용한 곳이에요.', time: now() }],
-    boo: [{ role: 'agent', text: '안녕하세요!!!! 저 BOO!예요 🎉', time: now() }],
+    hhh: [],
+    weekend: [],
+    home: [],
+    boo: [],
   })
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [tab, setTab] = useState<'map' | 'feed'>('map')
   const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  const handleEnter = (name: string) => {
+    localStorage.setItem('nickname', name)
+    setNickname(name)
+    // 첫 인사 로드
+    setChatHistory({
+      hhh: [{ role: 'agent', text: `...${name}씨, 왔어요? 앉아요.`, time: now() }],
+      weekend: [{ role: 'agent', text: `어서오세요 😊 ${name}님, 반가워요!`, time: now() }],
+      home: [{ role: 'agent', text: `${name}님, 양지마을에 오셨군요. 조용한 곳이에요.`, time: now() }],
+      boo: [{ role: 'agent', text: `${name}님 안녕하세요!!!! 저 BOO!예요 🎉`, time: now() }],
+    })
+  }
+
+  if (!nickname) return <NicknameGate onEnter={handleEnter} />
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -71,7 +117,7 @@ export default function Home() {
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ agentId: activeAgent.id, message: text, history }),
+      body: JSON.stringify({ agentId: activeAgent.id, message: text, history, nickname }),
     })
 
     if (!res.body) { setLoading(false); return }

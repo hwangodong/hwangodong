@@ -5,10 +5,14 @@ import { NextRequest } from 'next/server'
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 export async function POST(req: NextRequest) {
-  const { agentId, message, history } = await req.json()
+  const { agentId, message, history, nickname } = await req.json()
 
   const agent = getAgentById(agentId)
   if (!agent) return Response.json({ error: 'Agent not found' }, { status: 404 })
+
+  const systemPrompt = nickname
+    ? `${agent.personality}\n\n지금 대화하는 방문객의 닉네임은 '${nickname}'입니다. 자연스러운 대화 흐름에서 가끔 이름을 불러주세요.`
+    : agent.personality
 
   const messages = [
     ...(history || []),
@@ -18,7 +22,7 @@ export async function POST(req: NextRequest) {
   const stream = await anthropic.messages.stream({
     model: 'claude-haiku-4-5-20251001',
     max_tokens: 300,
-    system: agent.personality,
+    system: systemPrompt,
     messages,
   })
 
