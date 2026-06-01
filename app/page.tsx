@@ -114,15 +114,10 @@ export default function Home() {
       [activeAgent.id]: [...prev[activeAgent.id], userMsg],
     }))
 
-    const history = chatHistory[activeAgent.id].map(m => ({
-      role: m.role === 'agent' ? 'assistant' : 'user',
-      content: m.text,
-    }))
-
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ agentId: activeAgent.id, message: text, history, nickname }),
+      body: JSON.stringify({ agentId: activeAgent.id, message: text, nickname }),
     })
 
     if (!res.body) { setLoading(false); return }
