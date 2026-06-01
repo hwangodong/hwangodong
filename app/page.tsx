@@ -67,12 +67,18 @@ export default function Home() {
     if (typeof window !== 'undefined') return localStorage.getItem('nickname')
     return null
   })
-  const [activeAgent, setActiveAgent] = useState<Agent>(AGENTS.hhh)
+
+  // URL ?from=agentId 파라미터로 초기 매장 결정
+  const [activeAgent, setActiveAgent] = useState<Agent>(() => {
+    if (typeof window !== 'undefined') {
+      const from = new URLSearchParams(window.location.search).get('from')
+      if (from && AGENTS[from as AgentId]) return AGENTS[from as AgentId]
+    }
+    return AGENTS.hhh
+  })
+
   const [chatHistory, setChatHistory] = useState<Record<AgentId, Message[]>>({
-    hhh: [],
-    weekend: [],
-    home: [],
-    boo: [],
+    hhh: [], weekend: [], home: [], boo: [],
   })
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -82,7 +88,6 @@ export default function Home() {
   const handleEnter = (name: string) => {
     localStorage.setItem('nickname', name)
     setNickname(name)
-    // 첫 인사 로드
     setChatHistory({
       hhh: [{ role: 'agent', text: `...${name}씨, 왔어요? 앉아요.`, time: now() }],
       weekend: [{ role: 'agent', text: `어서오세요 😊 ${name}님, 반가워요!`, time: now() }],
