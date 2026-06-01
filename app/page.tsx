@@ -198,66 +198,180 @@ export default function Home() {
   )
 }
 
+// 매장별 캐릭터 설정
+const CHARACTERS: Record<string, { idle: string; active: string; building: string }> = {
+  hhh:     { idle: '🧍', active: '🙋', building: '🍺' },
+  weekend: { idle: '🧍', active: '🙋', building: '🛍️' },
+  home:    { idle: '🧎', active: '🙋', building: '🏡' },
+  boo:     { idle: '👷', active: '🙆', building: '🏗️' },
+}
+
+function IsometricBuilding({ agent, isActive, onClick }: {
+  agent: Agent
+  isActive: boolean
+  onClick: () => void
+}) {
+  const char = CHARACTERS[agent.id]
+  const [bounce, setBounce] = useState(false)
+
+  useEffect(() => {
+    if (isActive) {
+      setBounce(true)
+      const t = setTimeout(() => setBounce(false), 600)
+      return () => clearTimeout(t)
+    }
+  }, [isActive])
+
+  return (
+    <button
+      onClick={onClick}
+      className="flex flex-col items-center gap-0 group"
+      style={{ filter: isActive ? 'drop-shadow(0 0 8px rgba(255,255,255,0.8))' : 'none' }}
+    >
+      {/* 말풍선 (active일 때) */}
+      {isActive && (
+        <div className="mb-1 bg-white rounded-xl px-2 py-1 text-[10px] font-bold shadow-md whitespace-nowrap animate-bounce">
+          {agent.name} 👋
+        </div>
+      )}
+
+      {/* 캐릭터 */}
+      <div className={`text-2xl transition-transform ${bounce ? 'scale-125' : 'group-hover:scale-110'}`}
+        style={{ transform: `rotate(0deg)` }}>
+        {isActive ? char.active : char.idle}
+      </div>
+
+      {/* 건물 — 아이소메트릭 느낌 */}
+      <div className="relative mt-0">
+        {/* 지붕 */}
+        <div
+          className="w-16 h-5 flex items-center justify-center text-lg"
+          style={{
+            background: agent.color,
+            clipPath: 'polygon(0% 100%, 50% 0%, 100% 100%)',
+            marginBottom: -2,
+          }}
+        />
+        {/* 앞면 */}
+        <div
+          className="w-16 h-10 flex items-center justify-center text-base border-t-0"
+          style={{
+            background: agent.color,
+            opacity: 0.85,
+            borderRadius: '0 0 4px 4px',
+          }}
+        >
+          <span>{char.building}</span>
+        </div>
+        {/* 옆면 (3D 느낌) */}
+        <div
+          className="absolute right-0 top-0 w-3 h-10"
+          style={{
+            background: agent.color,
+            filter: 'brightness(0.6)',
+            transform: 'skewY(-45deg) translateX(100%)',
+            transformOrigin: 'top left',
+            borderRadius: '0 2px 2px 0',
+          }}
+        />
+      </div>
+
+      {/* 매장 이름 */}
+      <div className="mt-1 text-[10px] font-bold text-white bg-black/60 px-2 py-0.5 rounded-full whitespace-nowrap">
+        {agent.storeName}
+      </div>
+
+      {/* 상태 뱃지 */}
+      <div className={`text-[9px] text-white px-1.5 py-0.5 rounded-full mt-0.5 ${
+        agent.status === 'open' ? 'bg-green-500' :
+        agent.status === 'weekend' ? 'bg-yellow-500' : 'bg-orange-500'
+      }`}>
+        {agent.status === 'open' ? '영업 중' : agent.status === 'weekend' ? '주말 영업' : '오픈 준비'}
+      </div>
+    </button>
+  )
+}
+
 function MapView({ agents, activeAgent, onSelect }: {
   agents: Agent[]
   activeAgent: Agent
   onSelect: (a: Agent) => void
 }) {
   return (
-    <div className="relative w-full h-full bg-[#e8e0d5]">
-      <div
-        className="absolute inset-0 opacity-40"
-        style={{
-          backgroundImage: 'linear-gradient(90deg,#b4a591 1px,transparent 1px),linear-gradient(#b4a591 1px,transparent 1px)',
-          backgroundSize: '40px 40px',
-        }}
-      />
-      <div className="absolute" style={{ top: '8%', left: '8%', width: 130, height: 85 }}>
-        <div
-          className="w-full h-full rounded-[50%_50%_40%_40%] opacity-70 flex items-end justify-center pb-2"
-          style={{ background: 'radial-gradient(ellipse at 50% 60%,#b5a882 60%,#c8bc9a)' }}
-        >
-          <span className="text-[10px] text-[#6b5e40] font-semibold">왕릉</span>
+    <div className="relative w-full h-full overflow-hidden"
+      style={{ background: 'linear-gradient(180deg, #c8dff0 0%, #d4e8c2 40%, #c8b99a 100%)' }}>
+
+      {/* 하늘 */}
+      <div className="absolute top-0 left-0 right-0 h-1/3"
+        style={{ background: 'linear-gradient(180deg,#87CEEB,#c8dff0)' }}>
+        <div className="absolute top-4 left-12 text-2xl opacity-70">☁️</div>
+        <div className="absolute top-8 right-16 text-xl opacity-60">☁️</div>
+        <div className="absolute top-3 left-1/2 text-lg opacity-50">☁️</div>
+      </div>
+
+      {/* 왕릉들 */}
+      <div className="absolute" style={{ top: '18%', left: '6%' }}>
+        <div className="flex flex-col items-center">
+          <div className="w-20 h-12 rounded-[50%_50%_40%_40%] opacity-80 flex items-end justify-center pb-1"
+            style={{ background: 'radial-gradient(ellipse at 50% 60%,#8a7d5c,#b5a882)' }}>
+            <span className="text-[9px] text-[#4a3f20] font-bold">왕릉</span>
+          </div>
+          <div className="w-24 h-3 rounded-full opacity-40 mt-0"
+            style={{ background: '#6b5e40' }} />
         </div>
       </div>
-      <div className="absolute" style={{ top: '14%', left: '30%', width: 90, height: 58 }}>
-        <div
-          className="w-full h-full rounded-[50%_50%_40%_40%] opacity-55"
-          style={{ background: 'radial-gradient(ellipse at 50% 60%,#b5a882 60%,#c8bc9a)' }}
-        />
-      </div>
-      <div className="absolute bg-[#d4c9b8] border-y border-[#bfb49f]" style={{ top: '48%', left: 0, right: 0, height: 18 }} />
-      <div className="absolute bg-[#d4c9b8] border-y border-[#bfb49f]" style={{ top: '72%', left: '10%', right: 0, height: 18 }} />
-      <div className="absolute bg-[#d4c9b8] border-x border-[#bfb49f]" style={{ left: '44%', top: 0, bottom: 0, width: 18 }} />
 
-      {agents.map(agent => (
-        <button
-          key={agent.id}
-          onClick={() => onSelect(agent)}
-          className="absolute flex flex-col items-center transition-transform hover:scale-110"
-          style={{ top: `${agent.mapPosition.top}%`, left: `${agent.mapPosition.left}%`, transform: 'translate(-50%,-50%)' }}
-        >
-          <div
-            className={`w-11 h-11 rounded-full flex items-center justify-center text-xl border-2 border-white shadow-md ${
-              activeAgent.id === agent.id ? 'ring-4 ring-white/80' : ''
-            }`}
-            style={{ background: agent.color }}
-          >
-            {agent.emoji}
-          </div>
-          <span className="mt-1 text-[10px] font-bold text-white bg-black/60 px-1.5 py-0.5 rounded-full whitespace-nowrap">
-            {agent.storeName}
-          </span>
-          <span className={`text-[9px] text-white px-1.5 py-0.5 rounded-full mt-0.5 ${
-            agent.status === 'open' ? 'bg-green-500' :
-            agent.status === 'weekend' ? 'bg-yellow-500' : 'bg-orange-500'
-          }`}>
-            {agent.status === 'open' ? '영업 중' : agent.status === 'weekend' ? '주말 영업' : '오픈 준비'}
-          </span>
-        </button>
+      <div className="absolute" style={{ top: '14%', left: '22%' }}>
+        <div className="w-14 h-9 rounded-[50%_50%_40%_40%] opacity-70"
+          style={{ background: 'radial-gradient(ellipse at 50% 60%,#8a7d5c,#b5a882)' }} />
+      </div>
+
+      {/* 땅 / 잔디 */}
+      <div className="absolute bottom-0 left-0 right-0 h-2/3"
+        style={{ background: 'linear-gradient(180deg,#b8c99a 0%,#c8b99a 60%,#b8a888 100%)' }} />
+
+      {/* 도로 — 아이소메트릭 */}
+      <div className="absolute"
+        style={{
+          top: '52%', left: '-5%', right: '-5%', height: 22,
+          background: '#c4b89a',
+          borderTop: '2px solid #a89878',
+          borderBottom: '2px solid #a89878',
+          transform: 'skewY(-2deg)',
+        }} />
+      <div className="absolute"
+        style={{
+          top: '68%', left: '15%', right: '-5%', height: 18,
+          background: '#c4b89a',
+          borderTop: '2px solid #a89878',
+          borderBottom: '2px solid #a89878',
+          transform: 'skewY(-1deg)',
+        }} />
+
+      {/* 나무들 */}
+      {['12%', '55%', '80%', '35%'].map((left, i) => (
+        <div key={i} className="absolute flex flex-col items-center"
+          style={{ top: `${42 + i * 5}%`, left }}>
+          <div className="text-xl">🌲</div>
+        </div>
       ))}
 
-      <div className="absolute bottom-3 left-3 bg-white/90 rounded-lg px-3 py-2 text-[10px] text-gray-500 leading-6">
+      {/* 매장 건물들 */}
+      <div className="absolute" style={{ top: '38%', left: '8%' }}>
+        <IsometricBuilding agent={AGENTS.hhh} isActive={activeAgent.id === 'hhh'} onClick={() => onSelect(AGENTS.hhh)} />
+      </div>
+      <div className="absolute" style={{ top: '55%', left: '38%' }}>
+        <IsometricBuilding agent={AGENTS.weekend} isActive={activeAgent.id === 'weekend'} onClick={() => onSelect(AGENTS.weekend)} />
+      </div>
+      <div className="absolute" style={{ top: '32%', left: '62%' }}>
+        <IsometricBuilding agent={AGENTS.home} isActive={activeAgent.id === 'home'} onClick={() => onSelect(AGENTS.home)} />
+      </div>
+      <div className="absolute" style={{ top: '62%', left: '68%' }}>
+        <IsometricBuilding agent={AGENTS.boo} isActive={activeAgent.id === 'boo'} onClick={() => onSelect(AGENTS.boo)} />
+      </div>
+
+      {/* 범례 */}
+      <div className="absolute bottom-3 left-3 bg-white/80 rounded-lg px-3 py-2 text-[10px] text-gray-500 leading-5 backdrop-blur-sm">
         🟢 영업 중 &nbsp; 🟡 주말만 &nbsp; 🟠 오픈 예정
       </div>
     </div>
