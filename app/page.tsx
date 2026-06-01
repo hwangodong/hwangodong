@@ -14,6 +14,26 @@ function now() {
   return new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
 }
 
+function renderText(text: string) {
+  const urlRegex = /(https?:\/\/[^\s]+)/g
+  const parts = text.split(urlRegex)
+  return parts.map((part, i) =>
+    urlRegex.test(part) ? (
+      <a
+        key={i}
+        href={part}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center gap-1 mt-1 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs text-[#1a1a1a] font-medium hover:bg-gray-50"
+      >
+        🛍️ 온라인 샵 보러 가기 →
+      </a>
+    ) : (
+      <span key={i}>{part}</span>
+    )
+  )
+}
+
 export default function Home() {
   const [activeAgent, setActiveAgent] = useState<Agent>(AGENTS.hhh)
   const [chatHistory, setChatHistory] = useState<Record<AgentId, Message[]>>({
@@ -128,7 +148,7 @@ export default function Home() {
                         : 'bg-[#1a1a1a] text-white rounded-tr-sm'
                     }`}
                   >
-                    {msg.text || (loading && i === messages.length - 1 && msg.role === 'agent' ? (
+                    {msg.text ? renderText(msg.text) : (loading && i === messages.length - 1 && msg.role === 'agent' ? (
                       <span className="inline-flex gap-1 py-1">
                         <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                         <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
