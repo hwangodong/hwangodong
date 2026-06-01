@@ -145,26 +145,34 @@ export default function Home() {
 
   const messages = chatHistory[activeAgent.id]
 
+  const [view, setView] = useState<'map' | 'chat'>('map')
+
   return (
     <div className="flex flex-col h-screen bg-[#f5f0eb] font-sans">
-      <header className="bg-[#1a1a1a] text-white px-5 py-3 flex items-center justify-between">
+      <header className="bg-[#1a1a1a] text-white px-4 py-3 flex items-center justify-between">
         <h1 className="text-sm font-bold tracking-wide">🏮 황오동 가상 동네</h1>
         <span className="text-xs text-gray-400">황오동카니발 365</span>
       </header>
 
       <main className="flex flex-1 overflow-hidden">
-        <div className="flex-1 relative overflow-hidden">
+        {/* PC: 좌우 분할 / 모바일: 탭으로 전환 */}
+        <div className={`flex-1 relative overflow-hidden ${view === 'chat' ? 'hidden md:block' : 'block'}`}>
           {tab === 'map' ? (
-            <MapView agents={Object.values(AGENTS)} activeAgent={activeAgent} onSelect={setActiveAgent} />
+            <MapView agents={Object.values(AGENTS)} activeAgent={activeAgent} onSelect={(agent) => { setActiveAgent(agent); setView('chat') }} />
           ) : (
             <FeedView />
           )}
         </div>
 
-        <div className="w-80 bg-white flex flex-col border-l border-gray-200">
-          <div className="p-4 border-b border-gray-100 flex items-center gap-3">
+        <div className={`flex flex-col bg-white border-l border-gray-200 ${view === 'map' ? 'hidden md:flex md:w-80' : 'flex w-full md:w-80'}`}>
+          <div className="p-3 border-b border-gray-100 flex items-center gap-3">
+            {/* 모바일 뒤로가기 */}
+            <button
+              className="md:hidden text-gray-400 text-lg mr-1"
+              onClick={() => setView('map')}
+            >←</button>
             <div
-              className="w-10 h-10 rounded-full flex items-center justify-center text-lg flex-shrink-0"
+              className="w-9 h-9 rounded-full flex items-center justify-center text-base flex-shrink-0"
               style={{ background: activeAgent.color }}
             >
               {activeAgent.emoji}
@@ -186,11 +194,11 @@ export default function Home() {
                     {activeAgent.emoji}
                   </div>
                 )}
-                <div className={`max-w-[210px] flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                <div className={`max-w-[75%] flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
                   <div
                     className={`px-3 py-2 rounded-2xl text-sm leading-relaxed ${
                       msg.role === 'agent'
-                        ? 'bg-gray-100 rounded-tl-sm'
+                        ? 'bg-gray-100 text-gray-800 rounded-tl-sm'
                         : 'bg-[#1a1a1a] text-white rounded-tr-sm'
                     }`}
                   >
@@ -228,12 +236,12 @@ export default function Home() {
         </div>
       </main>
 
-      <nav className="bg-white border-t border-gray-200 flex">
+      <nav className="bg-white border-t border-gray-200 flex safe-area-pb">
         {(['map', 'feed'] as const).map(t => (
           <button
             key={t}
-            onClick={() => setTab(t)}
-            className={`flex-1 py-2 flex flex-col items-center gap-1 text-xs ${tab === t ? 'text-[#1a1a1a]' : 'text-gray-300'}`}
+            onClick={() => { setTab(t); setView('map') }}
+            className={`flex-1 py-3 flex flex-col items-center gap-1 text-xs ${tab === t && view !== 'chat' ? 'text-[#1a1a1a]' : 'text-gray-300'}`}
           >
             <span className="text-xl">{t === 'map' ? '🗺️' : '📰'}</span>
             {t === 'map' ? '지도' : '소식'}
